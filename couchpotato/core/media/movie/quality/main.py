@@ -37,7 +37,7 @@ class MovieQuality(QualityBase):
 
         addEvent('app.test', self.doTest)
 
-    def guess(self, files, extra = None, size = None, types = None use_cache = True):
+    def guess(self, files, extra = None, size = None, types = None, use_cache = True):
         if types and self.type not in types:
             return
 

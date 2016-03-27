@@ -2,6 +2,7 @@ import traceback
 
 from CodernityDB.database import RecordNotFound
 from couchpotato import get_db
+from couchpotato.api import addApiView
 from couchpotato.core.event import addEvent, fireEvent
 from couchpotato.core.helpers.encoding import toUnicode, ss
 from couchpotato.core.helpers.variable import mergeDicts, getExt, tryInt, splitString
@@ -32,16 +33,9 @@ class QualityBase(Plugin):
         addEvent('quality.get', self.get)
         addEvent('quality.all', self.all)
         addEvent('quality.reset_cache', self.resetCache)
-        addEvent('quality.order', self.getOrder)
+        #addEvent('quality.order', self.getOrder)
 
         addApiView('quality.size.save', self.saveSize)
-        addApiView('quality.list', self.allView, docs = {
-            'desc': 'List all available qualities',
-            'return': {'type': 'object', 'example': """{
-            'success': True,
-            'list': array, qualities
-}"""}
-        })
 
         addEvent('quality.fill', self.fill)
         addEvent('quality.isfinish', self.isFinish)
