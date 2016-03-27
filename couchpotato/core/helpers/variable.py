@@ -8,6 +8,7 @@ import re
 import string
 import sys
 import traceback
+import time
 
 from couchpotato.core.helpers.encoding import simplifyString, toSafeString, ss, sp, toUnicode
 from couchpotato.core.logger import CPLog
@@ -417,3 +418,7 @@ def compareVersions(version1, version2):
     def normalize(v):
         return [int(x) for x in re.sub(r'(\.0+)*$','', v).split(".")]
     return cmp(normalize(version1), normalize(version2))
+
+def strtotime(string, format):
+    timestamp = time.strptime(string, format)
+    return time.mktime(timestamp)

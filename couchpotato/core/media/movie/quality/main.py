@@ -1,26 +1,19 @@
-from math import fabs, ceil
-import traceback
 import re
 
-from CodernityDB.database import RecordNotFound
-from couchpotato import get_db
-from couchpotato.api import addApiView
+from couchpotato import CPLog
 from couchpotato.core.event import addEvent, fireEvent
-from couchpotato.core.helpers.encoding import toUnicode, ss
-from couchpotato.core.helpers.variable import mergeDicts, getExt, tryInt, splitString, tryFloat
-from couchpotato.core.logger import CPLog
-from couchpotato.core.plugins.base import Plugin
-from couchpotato.core.plugins.quality.index import QualityIndex
-
+from couchpotato.core.helpers.encoding import ss
+from couchpotato.core.helpers.variable import getExt, splitString, tryFloat
+from couchpotato.core.media._base.quality.base import QualityBase
+from math import ceil, fabs
 
 log = CPLog(__name__)
 
+autoload = 'MovieQuality'
 
-class QualityPlugin(Plugin):
 
-    _database = {
-        'quality': QualityIndex
-    }
+class MovieQuality(QualityBase):
+    type = 'movie'
 
     qualities = [
 		{'identifier': '2160p', 'hd': True, 'allow_3d': True, 'size': (10000, 650000), 'median_size': 20000, 'label': '2160p', 'width': 3840, 'height': 2160, 'alternative': [], 'allow': [], 'ext':['mkv'], 'tags': ['x264', 'h264', '2160']},
@@ -36,19 +29,10 @@ class QualityPlugin(Plugin):
         {'identifier': 'ts', 'size': (600, 1000), 'median_size': 700, 'label': 'TeleSync', 'alternative': ['telesync', 'hdts'], 'allow': ['720p', '1080p'], 'ext':[]},
         {'identifier': 'cam', 'size': (600, 1000), 'median_size': 700, 'label': 'Cam', 'alternative': ['camrip', 'hdcam'], 'allow': ['720p', '1080p'], 'ext':[]}
     ]
-    pre_releases = ['cam', 'ts', 'tc', 'r5', 'scr']
-    threed_tags = {
-        'sbs': [('half', 'sbs'), 'hsbs', ('full', 'sbs'), 'fsbs'],
-        'ou': [('half', 'ou'), 'hou', ('full', 'ou'), 'fou'],
-        '3d': ['2d3d', '3d2d', '3d'],
-    }
-
-    cached_qualities = None
-    cached_order = None
 
     def __init__(self):
-        addEvent('quality.all', self.all)
-        addEvent('quality.single', self.single)
+        super(MovieQuality, self).__init__()
+
         addEvent('quality.guess', self.guess)
         addEvent('quality.pre_releases', self.preReleases)
         addEvent('quality.order', self.getOrder)
@@ -70,63 +54,9 @@ class QualityPlugin(Plugin):
 
         addEvent('app.test', self.doTest)
 
-        self.order = []
-        self.addOrder()
-
-    def addOrder(self):
-        self.order = []
-        for q in self.qualities:
-            self.order.append(q.get('identifier'))
-
-    def getOrder(self):
-        return self.order
-
-    def preReleases(self):
-        return self.pre_releases
-
-    def allView(self, **kwargs):
-
-        return {
-            'success': True,
-            'list': self.all()
-        }
-
-    def all(self):
-
-        if self.cached_qualities:
-            return self.cached_qualities
-
-        db = get_db()
-
-        temp = []
-        for quality in self.qualities:
-            quality_doc = db.get('quality', quality.get('identifier'), with_doc = True)['doc']
-            q = mergeDicts(quality, quality_doc)
-            temp.append(q)
-
-        if len(temp) == len(self.qualities):
-            self.cached_qualities = temp
-
-        return temp
-
-    def single(self, identifier = ''):
-
-        db = get_db()
-        quality_dict = {}
-
-        quality = db.get('quality', identifier, with_doc = True)['doc']
-        if quality:
-            quality_dict = mergeDicts(self.getQuality(quality['identifier']), quality)
-
-        return quality_dict
-
-    def getQuality(self, identifier):
-
-        for q in self.qualities:
-            if identifier == q.get('identifier'):
-                return q
-
-    def saveSize(self, **kwargs):
+    def guess(self, files, extra = None, size = None, types = None):
+        if types and self.type not in types:
+            return
 
         try:
             db = get_db()
@@ -210,7 +140,8 @@ class QualityPlugin(Plugin):
 
         # Create hash for cache
         cache_key = str([f.replace('.' + getExt(f), '') if len(getExt(f)) < 4 else f for f in files])
-        if use_cache:
+        #if use_cache:
+        if True:
             cached = self.getCache(cache_key)
             if cached and len(extra) == 0:
                 return cached
@@ -380,11 +311,14 @@ class QualityPlugin(Plugin):
                 size_diff = size - size_min
                 size_proc = (size_diff / proc_range)
 
-                median_diff = quality['median_size'] - size_min
-                median_proc = (median_diff / proc_range)
+                #median_diff = quality['median_size'] - size_min
+                # FIXME: not sure this is the proper fix
+                average_diff = ((size_min + size_max) / 2) - size_min
+                average_proc = (average_diff / proc_range)
 
                 max_points = 8
-                score += ceil(max_points - (fabs(size_proc - median_proc) * max_points))
+                #score += ceil(max_points - (fabs(size_proc - median_proc) * max_points))
+                score += ceil(max_points - (fabs(size_proc - average_proc) * max_points))
             else:
                 score -= 5
 
@@ -415,49 +349,6 @@ class QualityPlugin(Plugin):
             for q in self.qualities:
                 if quality.get('identifier') != q.get('identifier') and score.get(q.get('identifier')):
                     score[q.get('identifier')]['score'] -= 1
-
-    def isFinish(self, quality, profile, release_age = 0):
-        if not isinstance(profile, dict) or not profile.get('qualities'):
-            # No profile so anything (scanned) is good enough
-            return True
-
-        try:
-            index = [i for i, identifier in enumerate(profile['qualities']) if identifier == quality['identifier'] and bool(profile['3d'][i] if profile.get('3d') else False) == bool(quality.get('is_3d', False))][0]
-
-            if index == 0 or (profile['finish'][index] and int(release_age) >= int(profile.get('stop_after', [0])[0])):
-                return True
-
-            return False
-        except:
-            return False
-
-    def isHigher(self, quality, compare_with, profile = None):
-        if not isinstance(profile, dict) or not profile.get('qualities'):
-            profile = fireEvent('profile.default', single = True)
-
-        # Try to find quality in profile, if not found: a quality we do not want is lower than anything else
-        try:
-            quality_order = [i for i, identifier in enumerate(profile['qualities']) if identifier == quality['identifier'] and bool(profile['3d'][i] if profile.get('3d') else 0) == bool(quality.get('is_3d', 0))][0]
-        except:
-            log.debug('Quality %s not found in profile identifiers %s', (quality['identifier'] + (' 3D' if quality.get('is_3d', 0) else ''), \
-                [identifier + (' 3D' if (profile['3d'][i] if profile.get('3d') else 0) else '') for i, identifier in enumerate(profile['qualities'])]))
-            return 'lower'
-
-        # Try to find compare quality in profile, if not found: anything is higher than a not wanted quality
-        try:
-            compare_order = [i for i, identifier in enumerate(profile['qualities']) if identifier == compare_with['identifier'] and bool(profile['3d'][i] if profile.get('3d') else 0) == bool(compare_with.get('is_3d', 0))][0]
-        except:
-            log.debug('Compare quality %s not found in profile identifiers %s', (compare_with['identifier'] + (' 3D' if compare_with.get('is_3d', 0) else ''), \
-                [identifier + (' 3D' if (profile['3d'][i] if profile.get('3d') else 0) else '') for i, identifier in enumerate(profile['qualities'])]))
-            return 'higher'
-
-        # Note to self: a lower number means higher quality
-        if quality_order > compare_order:
-            return 'lower'
-        elif quality_order == compare_order:
-            return 'equal'
-        else:
-            return 'higher'
 
     def doTest(self):
 
@@ -520,8 +411,8 @@ class QualityPlugin(Plugin):
             success = test_quality.get('identifier') == tests[name]['quality'] and test_quality.get('is_3d') == tests[name].get('is_3d', False)
             if not success:
                 log.error('%s failed check, thinks it\'s "%s" expecting "%s"', (name,
-                                                                            test_quality.get('identifier') + (' 3D' if test_quality.get('is_3d') else ''),
-                                                                            tests[name]['quality'] + (' 3D' if tests[name].get('is_3d') else '')
+                                                                                test_quality.get('identifier') + (' 3D' if test_quality.get('is_3d') else ''),
+                                                                                tests[name]['quality'] + (' 3D' if tests[name].get('is_3d') else '')
                 ))
 
             correct += success
@@ -531,5 +422,3 @@ class QualityPlugin(Plugin):
             return True
         else:
             log.error('Quality test failed: %s out of %s succeeded', (correct, len(tests)))
-
-
