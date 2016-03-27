@@ -471,7 +471,7 @@
 .category .formHint{opacity:.1}
 .category:hover .formHint{opacity:1}
 #category_ordering ul{float:left;margin:0;width:275px;padding:0}
-#category_ordering li{cursor:-webkit-grab;cursor:grab;border-bottom:1px solid transparent;border-color:#ebebeb;padding:5px;list-style:none}
+#category_ordering li{cursor:grab;border-bottom:1px solid transparent;border-color:#ebebeb;padding:5px;list-style:none}
 .dark #category_ordering li{border-color:#353535}
 #category_ordering li:last-child{border:0}
 #category_ordering li .check{margin:2px 10px 0 0;vertical-align:top}
@@ -527,7 +527,7 @@
 .profile .ctrlHolder .types .type label span{font-size:.9em}
 .profile .ctrlHolder .types .type input[type=checkbox]{margin-right:3px}
 .profile .ctrlHolder .types .type .delete,.profile .ctrlHolder .types .type .handle{margin-left:5px;width:20px;font-size:20px;opacity:.1;text-align:center;cursor:pointer}
-.profile .ctrlHolder .types .type .delete.handle,.profile .ctrlHolder .types .type .handle.handle{cursor:move;cursor:-webkit-grab;cursor:grab}
+.profile .ctrlHolder .types .type .delete.handle,.profile .ctrlHolder .types .type .handle.handle{cursor:move;cursor:grab}
 .profile .ctrlHolder .types .type .delete:hover,.profile .ctrlHolder .types .type .handle:hover{opacity:1}
 .profile .ctrlHolder .types .type.is_empty .delete,.profile .ctrlHolder .types .type.is_empty .handle{display:none}
 .profile .ctrlHolder.wait_for.wait_for{display:block}
@@ -544,7 +544,7 @@
 #profile_ordering li input[type=checkbox]{margin:2px 10px 0 0;vertical-align:top}
 #profile_ordering li>span{display:inline-block;height:20px;vertical-align:top;line-height:20px}
 #profile_ordering li>span.profile_label{-webkit-flex:1 1 auto;-ms-flex:1 1 auto;flex:1 1 auto}
-#profile_ordering li .handle{font-size:20px;width:20px;float:right;cursor:move;cursor:-webkit-grab;cursor:grab;opacity:.5;text-align:center}
+#profile_ordering li .handle{font-size:20px;width:20px;float:right;cursor:move;cursor:grab;opacity:.5;text-align:center}
 #profile_ordering li .handle:hover{opacity:1}
 .group_sizes .item .label{min-width:150px}
 .group_sizes .item .max,.group_sizes .item .min{display:inline-block;width:70px!important;min-width:0!important;margin-right:10px;text-align:center}
