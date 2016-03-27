@@ -265,7 +265,7 @@ var Movie = new Class({
 			self.profile.getTypes().each(function(type){
 
 				var q = self.addQuality(type.get('quality'), type.get('3d'));
-				if((type.finish === true || type.get('finish')) && !q.hasClass('finish')){
+				if((type.finish === true || type.get('finish')) && q && !q.hasClass('finish')){
 					q.addClass('finish');
 					q.set('title', q.get('title') + ' Will finish searching for this movie if this quality is found.');
 				}
@@ -371,6 +371,7 @@ var Movie = new Class({
 		var self = this;
 
 		var q = Quality.getQuality(quality);
+		if (!q) return;
 		return new Element('span', {
 			'text': q.label + (is_3d ? ' 3D' : ''),
 			'class': 'q_'+q.identifier + (is_3d ? ' is_3d' : ''),

@@ -310,7 +310,7 @@ Profile.Type = new Class({
 
 		self.el[self.data.quality ? 'removeClass' : 'addClass']('is_empty');
 
-		if(self.data.quality && Quality.getQuality(self.data.quality).allow_3d)
+		if(self.data.quality && Quality.getQuality(self.data.quality) && Quality.getQuality(self.data.quality).allow_3d)
 			self.el.addClass('allow_3d');
 
 	},
