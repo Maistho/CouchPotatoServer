@@ -15,7 +15,7 @@ var Movie = new Class({
 
 		self.buttons = [];
 
-		self.el = new Element('a.movie').grab(
+		self.el = new Element('a.movie.media').grab(
 			self.inner = new Element('div.inner')
 		);
 		self.el.store('klass', self);
@@ -121,8 +121,8 @@ var Movie = new Class({
 		var self = this;
 
 		self.el.destroy();
-		delete self.list.movies_added[self.get('id')];
-		self.list.movies.erase(self);
+		delete self.list.media_added[self.get('id')];
+		self.list.media.erase(self);
 
 		self.list.checkIfEmpty();
 

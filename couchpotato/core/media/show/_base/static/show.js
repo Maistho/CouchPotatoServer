@@ -11,7 +11,7 @@ var Show = new Class({
 		self.view = options.view || 'details';
 		self.list = list;
 
-		self.el = new Element('div.show');
+		self.el = new Element('div.media.show');
 
         self.episodes = new Episodes(self, {
             'actions': [EA.IMDB, EA.Release, EA.Refresh]
@@ -76,8 +76,8 @@ var Show = new Class({
 		var self = this;
 
 		self.el.destroy();
-		delete self.list.movies_added[self.get('id')];
-		self.list.movies.erase(self);
+		delete self.list.media_added[self.get('id')];
+		self.list.media.erase(self);
 
 		self.list.checkIfEmpty();
 
@@ -205,9 +205,6 @@ var Show = new Class({
 
 		if(!self.thumbnail)
 			self.el.addClass('no_thumbnail');
-
-		//self.changeView(self.view);
-		self.select_checkbox_class = new Form.Check(self.select_checkbox);
 
 		// Add profile
 		if(self.profile.data)

@@ -56,7 +56,7 @@ var Charts = new Class({
 
 				// Load movies in manually
 				chart_list.store(chart.list);
-				chart_list.addMovies(chart.list, chart.list.length);
+				chart_list.addMedia(chart.list, chart.list.length);
 				chart_list.checkIfEmpty();
 				chart_list.fireEvent('loaded');
 

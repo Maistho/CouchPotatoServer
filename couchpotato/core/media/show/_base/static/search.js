@@ -1,4 +1,4 @@
-Block.Search.ShowItem = new Class({
+var BlockSearchShowItem = new Class({
 
 	Implements: [Options, Events],
 
